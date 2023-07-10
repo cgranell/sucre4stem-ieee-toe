@@ -1,0 +1,85 @@
+```{r}
+#| label: load_libraries
+
+library(tidyverse)
+library(here)
+library(likert)
+
+library(forcats)
+library(stringr)
+
+library(ggthemes)
+
+```
+
+```{r}
+#| label: set_seed
+# just in case
+set.seed(nchar("sucre4stem"))
+```
+
+```{r}
+#| label: datafile
+
+survey_file <- here::here("data", "survey.csv")
+```
+
+```{r}
+#| label: dataload
+
+
+likert_labels <- c("Strongly Disagree",
+                   "Disagree",
+                   "Undecided",
+                   "Agree",
+                   "Strongly Agree") 
+  
+likert_levels <- c(1, 2, 3, 4, 5)
+
+survey_data <- read_csv2(survey_file, col_types = "cccciiic") |>
+  select(-Level, -Q1, -`Q1-cat`, -Q5) |>
+  drop_na() |>
+  mutate(Q2 = factor(Q2, levels = likert_levels, labels = likert_labels),
+         Q3 = factor(Q3, levels = likert_levels, labels = likert_labels),
+         Q4 = factor(Q4, levels = likert_levels, labels = likert_labels)) |>
+  rename(Q1 = Q2, Q2 = Q3, Q3 = Q4)
+
+
+write_rds(survey_data, file = here("data", "survey.rds"))  
+
+
+```
+
+```{r}
+data <- read_rds(here("data", "survey.rds"))
+
+
+```
+
+
+```{r}
+
+results <- 
+  data %>%
+  select(Q1, Q2, Q3) %>%
+  as.data.frame() %>%
+  likert::likert()
+```
+
+```{r pretest_geotech_terms_fig, fig.width=14, fig.height=10, dpi=300}
+plot(results, type="bar", legend = "", legend.position="right",
+     centered=TRUE, text.size=4,
+     low.color = "indianred4", high.color="goldenrod2") +
+  # labs(title = "Previous knowledge on computational thinking practices (N=23)") +
+  labs(title = NULL) +
+  guides(fill=guide_legend(nrow=5, byrow=TRUE)) +
+  theme_bw()
+  #theme_wsj(base_size = 12) + 
+  theme(plot.title = element_text(size=20))
+
+
+ggsave(here::here("figs", "fig_likert.png"), width = 8, height = 4, dpi = 300)
+
+
+```
+
